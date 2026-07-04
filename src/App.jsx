@@ -3,7 +3,7 @@ import { dbGet, dbSet, requestPersistence } from "./db";
 
 /* ============ CONSTANTS ============ */
 const COLORS = ["#FFB454", "#6FD08C", "#5EB3F6", "#F67E7E", "#C58BF2", "#F6D65E"];
-const EMOJIS = ["🔥","💧","🏋️","📖","☕","🚗","🎮","💰","🏃","😴","🍺","📵","🧠","🔧","📦","✅","💩","🍗","🍕","🍔"];
+const EMOJIS = ["🔥","💧","🏋️","📖","☕","🚗","🎮","💰","🏃","😴","🍺","📵","🧠","🔧","📦","✅","💩","🍗","🍕","🍔","🚭","🍆"];
 const MILESTONES_LOGS = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000];
 const MILESTONES_STREAK = [3, 7, 14, 30, 60, 100, 365];
 
@@ -632,8 +632,8 @@ function Detail({ tracker: t, events, notes, surprises, onSetNote, onBack, onEdi
         )}
       </div>
 
-      <div style={{ background: S.surface, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Rajdhani', sans-serif", color: S.muted, fontSize: 13, letterSpacing: 2, marginBottom: 12 }}>MILESTONES</div>
+      <div style={{ background: `linear-gradient(180deg, ${t.color}0F 0%, ${S.surface} 70px)`, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
+        <SectionHead color={t.color} label="MILESTONES" />
         {badgesStreak.length + badgesLogs.length + surprises.length > 0 ? (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
             {badgesStreak.map((m) => <Chip key={"s" + m} color={t.color} label={avoid ? `🛡️ ${m}D CLEAN` : `🔥 ${m}-DAY STREAK`} />)}
@@ -648,10 +648,8 @@ function Detail({ tracker: t, events, notes, surprises, onSetNote, onBack, onEdi
         </div>
       </div>
 
-      <div style={{ background: S.surface, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Rajdhani', sans-serif", color: S.muted, fontSize: 13, letterSpacing: 2, marginBottom: 12 }}>
-          LAST 7 DAYS <span style={{ letterSpacing: 0, textTransform: "none", fontFamily: "'Inter', sans-serif", fontSize: 11 }}>· tap a day to add a note</span>
-        </div>
+      <div style={{ background: `linear-gradient(180deg, ${t.color}0F 0%, ${S.surface} 70px)`, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
+        <SectionHead color={t.color} label="LAST 7 DAYS" sub="· tap a day to add a note" />
         <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 118 }}>
           {days7.map((d) => {
             const c = dayCounts[d] || 0;
@@ -688,8 +686,8 @@ function Detail({ tracker: t, events, notes, surprises, onSetNote, onBack, onEdi
         )}
       </div>
 
-      <div style={{ background: S.surface, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
-        <div style={{ fontFamily: "'Rajdhani', sans-serif", color: S.muted, fontSize: 13, letterSpacing: 2, marginBottom: 12 }}>LAST 6 MONTHS</div>
+      <div style={{ background: `linear-gradient(180deg, ${t.color}0F 0%, ${S.surface} 70px)`, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
+        <SectionHead color={t.color} label="LAST 6 MONTHS" />
         <div style={{ display: "flex", gap: 2, overflowX: "auto", paddingBottom: 4 }}>
           {Array.from({ length: 26 }, (_, w) => (
             <div key={w} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -712,15 +710,16 @@ function Detail({ tracker: t, events, notes, surprises, onSetNote, onBack, onEdi
         </div>
       </div>
 
-      <div style={{ background: S.surface, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 }}>
-          <div style={{ fontFamily: "'Rajdhani', sans-serif", color: S.muted, fontSize: 13, letterSpacing: 2 }}>{avoid ? "SLIP TIMES" : "TIME OF DAY"}</div>
-          {peak && (
+      <div style={{ background: `linear-gradient(180deg, ${t.color}0F 0%, ${S.surface} 70px)`, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
+        <SectionHead
+          color={t.color}
+          label={avoid ? "SLIP TIMES" : "TIME OF DAY"}
+          right={peak ? (
             <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 14, color: t.color, fontWeight: 600 }}>
               PEAK {fmtHour(peak.start)}–{fmtHour(peak.end)}
             </div>
-          )}
-        </div>
+          ) : null}
+        />
         {peak ? (
           <>
             <div style={{ display: "flex", alignItems: "flex-end", gap: 2, height: 70 }}>
@@ -749,8 +748,8 @@ function Detail({ tracker: t, events, notes, surprises, onSetNote, onBack, onEdi
         )}
       </div>
 
-      <div style={{ background: S.surface, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 20 }}>
-        <div style={{ fontFamily: "'Rajdhani', sans-serif", color: S.muted, fontSize: 13, letterSpacing: 2, marginBottom: 10 }}>RECENT LOG</div>
+      <div style={{ background: `linear-gradient(180deg, ${t.color}0F 0%, ${S.surface} 70px)`, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 20 }}>
+        <SectionHead color={t.color} label="RECENT LOG" />
         {recent.length === 0 && <div style={{ color: S.muted, fontSize: 13 }}>No entries yet — tap + on the home screen to log one.</div>}
         {recent.map((e) => (
           <div key={e.id} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: `1px solid ${S.line}`, fontSize: 13 }}>
@@ -779,6 +778,19 @@ function Detail({ tracker: t, events, notes, surprises, onSetNote, onBack, onEdi
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+function SectionHead({ label, color, right, sub }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+      <div style={{ width: 4, height: 16, borderRadius: 2, background: `linear-gradient(180deg, ${color}, ${color}33)` }} />
+      <div style={{ fontFamily: "'Rajdhani', sans-serif", color: S.text, fontSize: 13, letterSpacing: 2, fontWeight: 600, flex: 1 }}>
+        {label}
+        {sub && <span style={{ color: S.muted, letterSpacing: 0, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 400 }}> {sub}</span>}
+      </div>
+      {right}
     </div>
   );
 }
