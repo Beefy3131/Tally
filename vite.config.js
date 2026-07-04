@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
-
+ 
 export default defineConfig({
   plugins: [
     react(),
@@ -17,6 +17,15 @@ export default defineConfig({
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
+        shortcuts: [
+          {
+            name: 'Quick log',
+            short_name: 'Quick log',
+            description: 'Instantly log your top tracker',
+            url: '/?quicklog=1',
+            icons: [{ src: 'icon-192.png', sizes: '192x192' }],
+          },
+        ],
         icons: [
           { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
@@ -39,3 +48,4 @@ export default defineConfig({
     }),
   ],
 })
+ 
