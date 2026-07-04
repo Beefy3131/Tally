@@ -219,7 +219,7 @@ function Shell({ children }) {
         input:focus, button:focus-visible { outline: 2px solid ${S.amber}; outline-offset: 2px; }
         input:focus { outline-offset: 0; }
       `}</style>
-      <div style={{ maxWidth: 480, margin: "0 auto", padding: "20px 16px 40px" }}>{children}</div>
+      <div style={{ maxWidth: 480, margin: "0 auto", padding: "20px 16px 40px", paddingTop: "calc(20px + env(safe-area-inset-top))", paddingBottom: "calc(40px + env(safe-area-inset-bottom))" }}>{children}</div>
     </div>
   );
 }
