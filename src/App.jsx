@@ -2,10 +2,16 @@ import React, { useState, useEffect, useRef } from "react";
 import { dbGet, dbSet, requestPersistence } from "./db";
 
 /* ============ CONSTANTS ============ */
-const COLORS = ["#FFB454", "#6FD08C", "#5EB3F6", "#F67E7E", "#C58BF2", "#F6D65E"];
+const COLORS = ["#FFA126", "#3FC96E", "#2E96F5", "#F25555", "#AE5CF2", "#F2C818"];
 const EMOJIS = ["🔥","💧","🏋️","📖","☕","🚗","🎮","💰","🏃","😴","🍺","📵","🧠","🔧","📦","✅","💩","🍗","🍕","🍔","🚭","🍆"];
 const MILESTONES_LOGS = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000];
 const MILESTONES_STREAK = [3, 7, 14, 30, 60, 100, 365];
+
+const COLOR_MIGRATE = {
+  "#FFB454": "#FFA126", "#6FD08C": "#3FC96E", "#5EB3F6": "#2E96F5",
+  "#F67E7E": "#F25555", "#C58BF2": "#AE5CF2", "#F6D65E": "#F2C818",
+};
+const migrateTrackers = (ts) => (ts || []).map((t) => ({ ...t, color: COLOR_MIGRATE[t.color] || t.color }));
 
 const S = {
   bg: "#14171C",
@@ -14,7 +20,7 @@ const S = {
   line: "#2C323D",
   text: "#E8EAED",
   muted: "#8B93A1",
-  amber: "#FFB454",
+  amber: "#FFA126",
 };
 
 /* ============ HELPERS ============ */
@@ -156,7 +162,7 @@ export default function App() {
       try {
         const data = await dbGet("data");
         if (data) {
-          setTrackers(data.trackers || []);
+          setTrackers(migrateTrackers(data.trackers));
           setEvents(data.events || []);
           setNotes(data.notes || {});
           setSurprises(data.surprises || []);
@@ -282,7 +288,7 @@ export default function App() {
   if (!ready)
     return (
       <Shell>
-        <div style={{ color: S.muted, textAlign: "center", paddingTop: 80, fontFamily: "'Rajdhani', sans-serif", fontSize: 18, letterSpacing: 2 }}>
+        <div style={{ color: S.muted, textAlign: "center", paddingTop: 80, fontFamily: "'Rajdhani', sans-serif", fontSize: 20, letterSpacing: 2 }}>
           LOADING…
         </div>
       </Shell>
@@ -302,7 +308,7 @@ export default function App() {
           onAmount={(t) => setAmountFor(t)}
           onCompare={() => setView({ page: "compare" })}
           onImport={(data) => {
-            setTrackers(data.trackers || []);
+            setTrackers(migrateTrackers(data.trackers));
             setEvents(data.events || []);
             setNotes(data.notes || {});
             setSurprises(data.surprises || []);
@@ -352,7 +358,7 @@ export default function App() {
         />
       )}
       {toast && (
-        <div style={{ position: "fixed", top: "calc(14px + env(safe-area-inset-top))", left: "50%", transform: "translateX(-50%)", background: S.surface2, border: `1px solid ${S.amber}77`, color: S.text, padding: "10px 18px", borderRadius: 12, fontSize: 14, zIndex: 60, boxShadow: "0 4px 20px #0008", animation: "fadeUp .25s ease", whiteSpace: "nowrap" }}>
+        <div style={{ position: "fixed", top: "calc(14px + env(safe-area-inset-top))", left: "50%", transform: "translateX(-50%)", background: S.surface2, border: `1px solid ${S.amber}77`, color: S.text, padding: "10px 18px", borderRadius: 12, fontSize: 15, zIndex: 60, boxShadow: "0 4px 20px #0008", animation: "fadeUp .25s ease", whiteSpace: "nowrap" }}>
           {toast}
         </div>
       )}
@@ -416,22 +422,22 @@ function Home({ trackers, events, pulse, onInc, onUndo, onDetail, onAdd, onAmoun
   return (
     <div style={{ animation: "fadeUp .25s ease" }}>
       <header style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 4 }}>
-        <h1 style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 30, letterSpacing: 3, margin: 0 }}>
+        <h1 style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 32, letterSpacing: 3, margin: 0 }}>
           TALLY
         </h1>
-        <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 15, color: S.muted, letterSpacing: 1 }}>
+        <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 16, color: S.muted, letterSpacing: 1 }}>
           {new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }).toUpperCase()}
         </div>
       </header>
-      <div style={{ color: S.muted, fontSize: 13, marginBottom: 20 }}>
+      <div style={{ color: S.muted, fontSize: 14, marginBottom: 20 }}>
         {trackers.length === 0 ? "Nothing tracked yet" : `${todayTotal} log${todayTotal === 1 ? "" : "s"} today`}
       </div>
 
       {trackers.length === 0 && (
         <div style={{ background: S.surface, border: `1px dashed ${S.line}`, borderRadius: 14, padding: "36px 20px", textAlign: "center", marginBottom: 16 }}>
-          <div style={{ fontSize: 30, marginBottom: 10 }}>🎯</div>
+          <div style={{ fontSize: 32, marginBottom: 10 }}>🎯</div>
           <div style={{ fontWeight: 600, marginBottom: 6 }}>Add your first tracker</div>
-          <div style={{ color: S.muted, fontSize: 13, lineHeight: 1.5 }}>
+          <div style={{ color: S.muted, fontSize: 14, lineHeight: 1.5 }}>
             Anything countable — coffees, workouts, sales calls, laps at the track.
           </div>
         </div>
@@ -462,7 +468,7 @@ function Home({ trackers, events, pulse, onInc, onUndo, onDetail, onAdd, onAmoun
         style={{
           width: "100%", padding: "14px", borderRadius: 14, border: `1px solid ${S.line}`,
           background: S.surface, color: S.amber, fontFamily: "'Rajdhani', sans-serif",
-          fontSize: 17, fontWeight: 600, letterSpacing: 2, marginTop: 4,
+          fontSize: 18, fontWeight: 600, letterSpacing: 2, marginTop: 4,
         }}
       >
         + NEW TRACKER
@@ -474,7 +480,7 @@ function Home({ trackers, events, pulse, onInc, onUndo, onDetail, onAdd, onAmoun
           style={{
             width: "100%", padding: "12px", borderRadius: 14, border: `1px solid ${S.line}`,
             background: "none", color: S.muted, fontFamily: "'Rajdhani', sans-serif",
-            fontSize: 15, fontWeight: 600, letterSpacing: 2, marginTop: 10,
+            fontSize: 16, fontWeight: 600, letterSpacing: 2, marginTop: 10,
           }}
         >
           ⇄ COMPARE TRACKERS
@@ -482,10 +488,10 @@ function Home({ trackers, events, pulse, onInc, onUndo, onDetail, onAdd, onAmoun
       )}
 
       <div style={{ display: "flex", justifyContent: "center", gap: 18, marginTop: 24 }}>
-        <button onClick={exportData} style={{ background: "none", border: "none", color: S.muted, fontSize: 12, textDecoration: "underline", textUnderlineOffset: 2 }}>
+        <button onClick={exportData} style={{ background: "none", border: "none", color: S.muted, fontSize: 13, textDecoration: "underline", textUnderlineOffset: 2 }}>
           Export backup
         </button>
-        <button onClick={() => fileRef.current?.click()} style={{ background: "none", border: "none", color: S.muted, fontSize: 12, textDecoration: "underline", textUnderlineOffset: 2 }}>
+        <button onClick={() => fileRef.current?.click()} style={{ background: "none", border: "none", color: S.muted, fontSize: 13, textDecoration: "underline", textUnderlineOffset: 2 }}>
           Import backup
         </button>
         <input ref={fileRef} type="file" accept=".json,application/json" onChange={importData} style={{ display: "none" }} />
@@ -505,10 +511,10 @@ function TrackerCard({ t, count, streak, freezes, lastTs, pulsing, onInc, onUndo
         style={{ background: "none", border: "none", textAlign: "left", flex: 1, minWidth: 0, color: S.text, padding: 0 }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <span style={{ fontSize: 20 }}>{t.emoji}</span>
-          <span style={{ fontWeight: 600, fontSize: 15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.name}</span>
+          <span style={{ fontSize: 22 }}>{t.emoji}</span>
+          <span style={{ fontWeight: 600, fontSize: 16, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.name}</span>
         </div>
-        <div style={{ color: S.muted, fontSize: 12, marginTop: 4, display: "flex", gap: 10, flexWrap: "wrap" }}>
+        <div style={{ color: S.muted, fontSize: 13, marginTop: 4, display: "flex", gap: 10, flexWrap: "wrap" }}>
           {avoid ? (
             <span style={{ color: t.color }}>🛡️ {streak}d clean</span>
           ) : (
@@ -525,7 +531,7 @@ function TrackerCard({ t, count, streak, freezes, lastTs, pulsing, onInc, onUndo
         disabled={avoid ? false : count <= 0}
         style={{
           width: 34, height: 34, borderRadius: 10, border: `1px solid ${S.line}`,
-          background: S.surface2, color: avoid || count > 0 ? S.muted : S.line, fontSize: 18, lineHeight: 1,
+          background: S.surface2, color: avoid || count > 0 ? S.muted : S.line, fontSize: 20, lineHeight: 1,
         }}
       >
         −
@@ -536,25 +542,25 @@ function TrackerCard({ t, count, streak, freezes, lastTs, pulsing, onInc, onUndo
         aria-label={avoid ? `Log a ${t.name} slip` : `Add one ${t.name}`}
         style={{
           minWidth: 84, height: 56, borderRadius: 12,
-          border: `1px solid ${avoid ? "#F67E7E44" : `${t.color}44`}`,
-          background: avoid ? "#F67E7E14" : `${t.color}1A`,
+          border: `1px solid ${avoid ? "#F2555566" : `${t.color}66`}`,
+          background: avoid ? "#F2555526" : `${t.color}26`,
           display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
           animation: pulsing ? "tick .3s ease" : "none",
         }}
       >
         {avoid ? (
-          <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 14, color: "#F67E7E", letterSpacing: 1 }}>
+          <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 15, color: "#F25555", letterSpacing: 1 }}>
             I SLIPPED
           </span>
         ) : (
           <>
-            <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: String(fmtNum(count)).length > 3 ? 20 : 30, color: t.color, fontVariantNumeric: "tabular-nums", letterSpacing: 1 }}>
+            <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: String(fmtNum(count)).length > 3 ? 22 : 34, color: t.color, fontVariantNumeric: "tabular-nums", letterSpacing: 1 }}>
               {fmtNum(count)}
             </span>
             {t.unit && (
-              <span style={{ color: `${t.color}AA`, fontSize: 11, fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, alignSelf: "flex-end", paddingBottom: 12 }}>{t.unit}</span>
+              <span style={{ color: `${t.color}CC`, fontSize: 12, fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, alignSelf: "flex-end", paddingBottom: 12 }}>{t.unit}</span>
             )}
-            <span style={{ color: t.color, fontSize: 18, fontWeight: 600 }}>+</span>
+            <span style={{ color: t.color, fontSize: 20, fontWeight: 600 }}>+</span>
           </>
         )}
       </button>
@@ -599,19 +605,19 @@ function Detail({ tracker: t, events, notes, surprises, onSetNote, onBack, onEdi
 
   return (
     <div style={{ animation: "fadeUp .25s ease" }}>
-      <button onClick={onBack} style={{ background: "none", border: "none", color: S.muted, fontSize: 14, padding: "4px 0", marginBottom: 12 }}>
+      <button onClick={onBack} style={{ background: "none", border: "none", color: S.muted, fontSize: 15, padding: "4px 0", marginBottom: 12 }}>
         ‹ Back
       </button>
 
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
-        <span style={{ fontSize: 28 }}>{t.emoji}</span>
-        <h2 style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 24, fontWeight: 700, letterSpacing: 1, margin: 0, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</h2>
+        <span style={{ fontSize: 30 }}>{t.emoji}</span>
+        <h2 style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 26, fontWeight: 700, letterSpacing: 1, margin: 0, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</h2>
         {!avoid && (
-          <button onClick={() => onFocus(t)} style={{ background: `${t.color}1A`, border: `1px solid ${t.color}44`, borderRadius: 10, color: t.color, padding: "8px 12px", fontSize: 13, fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, letterSpacing: 1 }}>
+          <button onClick={() => onFocus(t)} style={{ background: `${t.color}26`, border: `1px solid ${t.color}66`, borderRadius: 10, color: t.color, padding: "8px 12px", fontSize: 14, fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, letterSpacing: 1 }}>
             ◎ FOCUS
           </button>
         )}
-        <button onClick={() => onEdit(t)} style={{ background: S.surface, border: `1px solid ${S.line}`, borderRadius: 10, color: S.text, padding: "8px 14px", fontSize: 13 }}>
+        <button onClick={() => onEdit(t)} style={{ background: S.surface, border: `1px solid ${S.line}`, borderRadius: 10, color: S.text, padding: "8px 14px", fontSize: 14 }}>
           Edit
         </button>
       </div>
@@ -632,7 +638,7 @@ function Detail({ tracker: t, events, notes, surprises, onSetNote, onBack, onEdi
         )}
       </div>
 
-      <div style={{ background: `linear-gradient(180deg, ${t.color}0F 0%, ${S.surface} 70px)`, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
+      <div style={{ background: `linear-gradient(180deg, ${t.color}1A 0%, ${S.surface} 70px)`, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
         <SectionHead color={t.color} label="MILESTONES" />
         {badgesStreak.length + badgesLogs.length + surprises.length > 0 ? (
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
@@ -641,14 +647,14 @@ function Detail({ tracker: t, events, notes, surprises, onSetNote, onBack, onEdi
             {surprises.map((sp) => <Chip key={sp.id} color={S.amber} label={sp.label} />)}
           </div>
         ) : (
-          <div style={{ color: S.muted, fontSize: 13, marginBottom: 10 }}>No badges yet — keep logging.</div>
+          <div style={{ color: S.muted, fontSize: 14, marginBottom: 10 }}>No badges yet — keep logging.</div>
         )}
-        <div style={{ color: S.muted, fontSize: 11 }}>
+        <div style={{ color: S.muted, fontSize: 12 }}>
           Next up: {nextLog ? `${nextLog} logs · ` : ""}{nextStreak ? `${nextStreak}-day ${avoid ? "clean run" : "streak"}` : "—"}
         </div>
       </div>
 
-      <div style={{ background: `linear-gradient(180deg, ${t.color}0F 0%, ${S.surface} 70px)`, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
+      <div style={{ background: `linear-gradient(180deg, ${t.color}1A 0%, ${S.surface} 70px)`, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
         <SectionHead color={t.color} label="LAST 7 DAYS" sub="· tap a day to add a note" />
         <div style={{ display: "flex", alignItems: "flex-end", gap: 8, height: 118 }}>
           {days7.map((d) => {
@@ -657,10 +663,10 @@ function Detail({ tracker: t, events, notes, surprises, onSetNote, onBack, onEdi
             const hasNote = !!notes[d];
             return (
               <button key={d} onClick={() => openNote(d)} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 5, background: "none", border: "none", padding: 0 }}>
-                <div style={{ height: 8, fontSize: 8, color: S.amber }}>{hasNote ? "●" : ""}</div>
-                <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 13, color: c ? t.color : S.line, fontWeight: 600 }}>{c ? fmtNum(c) : ""}</div>
+                <div style={{ height: 8, fontSize: 9, color: S.amber }}>{hasNote ? "●" : ""}</div>
+                <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 14, color: c ? t.color : S.line, fontWeight: 600 }}>{c ? fmtNum(c) : ""}</div>
                 <div style={{ width: "100%", height: h, borderRadius: 5, background: c ? t.color : S.surface2, opacity: c ? 0.9 : 1, border: noteDay === d ? `1px solid ${S.text}` : "none" }} />
-                <div style={{ fontSize: 10, color: S.muted }}>
+                <div style={{ fontSize: 11, color: S.muted }}>
                   {new Date(d + "T12:00").toLocaleDateString(undefined, { weekday: "narrow" })}
                 </div>
               </button>
@@ -674,11 +680,11 @@ function Detail({ tracker: t, events, notes, surprises, onSetNote, onBack, onEdi
               onChange={(e) => setNoteDraft(e.target.value)}
               placeholder={`Note for ${new Date(noteDay + "T12:00").toLocaleDateString(undefined, { month: "short", day: "numeric" })}…`}
               maxLength={80}
-              style={{ flex: 1, minWidth: 0, padding: "10px 12px", borderRadius: 10, border: `1px solid ${S.line}`, background: S.surface2, color: S.text, fontSize: 13 }}
+              style={{ flex: 1, minWidth: 0, padding: "10px 12px", borderRadius: 10, border: `1px solid ${S.line}`, background: S.surface2, color: S.text, fontSize: 14 }}
             />
             <button
               onClick={() => { onSetNote(noteDay, noteDraft); setNoteDay(null); }}
-              style={{ background: t.color, border: "none", borderRadius: 10, color: "#14171C", padding: "0 16px", fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 13, letterSpacing: 1 }}
+              style={{ background: t.color, border: "none", borderRadius: 10, color: "#14171C", padding: "0 16px", fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 14, letterSpacing: 1 }}
             >
               SAVE
             </button>
@@ -686,7 +692,7 @@ function Detail({ tracker: t, events, notes, surprises, onSetNote, onBack, onEdi
         )}
       </div>
 
-      <div style={{ background: `linear-gradient(180deg, ${t.color}0F 0%, ${S.surface} 70px)`, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
+      <div style={{ background: `linear-gradient(180deg, ${t.color}1A 0%, ${S.surface} 70px)`, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
         <SectionHead color={t.color} label="LAST 6 MONTHS" />
         <div style={{ display: "flex", gap: 2, overflowX: "auto", paddingBottom: 4 }}>
           {Array.from({ length: 26 }, (_, w) => (
@@ -710,12 +716,12 @@ function Detail({ tracker: t, events, notes, surprises, onSetNote, onBack, onEdi
         </div>
       </div>
 
-      <div style={{ background: `linear-gradient(180deg, ${t.color}0F 0%, ${S.surface} 70px)`, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
+      <div style={{ background: `linear-gradient(180deg, ${t.color}1A 0%, ${S.surface} 70px)`, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
         <SectionHead
           color={t.color}
           label={avoid ? "SLIP TIMES" : "TIME OF DAY"}
           right={peak ? (
-            <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 14, color: t.color, fontWeight: 600 }}>
+            <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 15, color: t.color, fontWeight: 600 }}>
               PEAK {fmtHour(peak.start)}–{fmtHour(peak.end)}
             </div>
           ) : null}
@@ -733,26 +739,26 @@ function Detail({ tracker: t, events, notes, surprises, onSetNote, onBack, onEdi
                       flex: 1,
                       height: Math.max(3, (c / maxHour) * 62),
                       borderRadius: 2,
-                      background: c === 0 ? S.surface2 : inPeak ? t.color : `${t.color}66`,
+                      background: c === 0 ? S.surface2 : inPeak ? t.color : `${t.color}88`,
                     }}
                   />
                 );
               })}
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 10, color: S.muted }}>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 11, color: S.muted }}>
               <span>12AM</span><span>6AM</span><span>12PM</span><span>6PM</span><span>11PM</span>
             </div>
           </>
         ) : (
-          <div style={{ color: S.muted, fontSize: 13 }}>Log a few entries and your peak hours will show up here.</div>
+          <div style={{ color: S.muted, fontSize: 14 }}>Log a few entries and your peak hours will show up here.</div>
         )}
       </div>
 
-      <div style={{ background: `linear-gradient(180deg, ${t.color}0F 0%, ${S.surface} 70px)`, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 20 }}>
+      <div style={{ background: `linear-gradient(180deg, ${t.color}1A 0%, ${S.surface} 70px)`, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 20 }}>
         <SectionHead color={t.color} label="RECENT LOG" />
-        {recent.length === 0 && <div style={{ color: S.muted, fontSize: 13 }}>No entries yet — tap + on the home screen to log one.</div>}
+        {recent.length === 0 && <div style={{ color: S.muted, fontSize: 14 }}>No entries yet — tap + on the home screen to log one.</div>}
         {recent.map((e) => (
-          <div key={e.id} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: `1px solid ${S.line}`, fontSize: 13 }}>
+          <div key={e.id} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: `1px solid ${S.line}`, fontSize: 14 }}>
             <span style={{ color: e.delta > 0 ? t.color : S.muted, fontFamily: "'Rajdhani', sans-serif", fontWeight: 600 }}>
               {e.delta > 0 ? (avoid ? "slip" : `+${fmtNum(e.delta)}${t.unit ? " " + t.unit : ""}`) : "−1"}
             </span>
@@ -764,16 +770,16 @@ function Detail({ tracker: t, events, notes, surprises, onSetNote, onBack, onEdi
       </div>
 
       {!confirmDel ? (
-        <button onClick={() => setConfirmDel(true)} style={{ background: "none", border: "none", color: "#F67E7E", fontSize: 13, padding: 0 }}>
+        <button onClick={() => setConfirmDel(true)} style={{ background: "none", border: "none", color: "#F25555", fontSize: 14, padding: 0 }}>
           Delete tracker
         </button>
       ) : (
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <span style={{ fontSize: 13, color: S.muted }}>Delete "{t.name}" and all its history?</span>
-          <button onClick={() => onDelete(t.id)} style={{ background: "#F67E7E22", border: "1px solid #F67E7E55", color: "#F67E7E", borderRadius: 8, padding: "6px 12px", fontSize: 13 }}>
+          <span style={{ fontSize: 14, color: S.muted }}>Delete "{t.name}" and all its history?</span>
+          <button onClick={() => onDelete(t.id)} style={{ background: "#F2555533", border: "1px solid #F2555577", color: "#F25555", borderRadius: 8, padding: "6px 12px", fontSize: 14 }}>
             Delete
           </button>
-          <button onClick={() => setConfirmDel(false)} style={{ background: S.surface, border: `1px solid ${S.line}`, color: S.text, borderRadius: 8, padding: "6px 12px", fontSize: 13 }}>
+          <button onClick={() => setConfirmDel(false)} style={{ background: S.surface, border: `1px solid ${S.line}`, color: S.text, borderRadius: 8, padding: "6px 12px", fontSize: 14 }}>
             Keep
           </button>
         </div>
@@ -785,10 +791,10 @@ function Detail({ tracker: t, events, notes, surprises, onSetNote, onBack, onEdi
 function SectionHead({ label, color, right, sub }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-      <div style={{ width: 4, height: 16, borderRadius: 2, background: `linear-gradient(180deg, ${color}, ${color}33)` }} />
-      <div style={{ fontFamily: "'Rajdhani', sans-serif", color: S.text, fontSize: 13, letterSpacing: 2, fontWeight: 600, flex: 1 }}>
+      <div style={{ width: 4, height: 16, borderRadius: 2, background: `linear-gradient(180deg, ${color}, ${color}4D)` }} />
+      <div style={{ fontFamily: "'Rajdhani', sans-serif", color: S.text, fontSize: 14, letterSpacing: 2, fontWeight: 600, flex: 1 }}>
         {label}
-        {sub && <span style={{ color: S.muted, letterSpacing: 0, fontFamily: "'Inter', sans-serif", fontSize: 11, fontWeight: 400 }}> {sub}</span>}
+        {sub && <span style={{ color: S.muted, letterSpacing: 0, fontFamily: "'Inter', sans-serif", fontSize: 12, fontWeight: 400 }}> {sub}</span>}
       </div>
       {right}
     </div>
@@ -797,7 +803,7 @@ function SectionHead({ label, color, right, sub }) {
 
 function Chip({ label, color }) {
   return (
-    <span style={{ border: `1px solid ${color}55`, background: `${color}14`, color: S.text, borderRadius: 999, padding: "5px 12px", fontSize: 11, fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, letterSpacing: 1 }}>
+    <span style={{ border: `1px solid ${color}77`, background: `${color}20`, color: S.text, borderRadius: 999, padding: "5px 12px", fontSize: 12, fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, letterSpacing: 1 }}>
       {label}
     </span>
   );
@@ -806,8 +812,8 @@ function Chip({ label, color }) {
 function Stat({ label, value, color }) {
   return (
     <div style={{ background: S.surface, border: `1px solid ${S.line}`, borderRadius: 14, padding: "12px 8px", textAlign: "center" }}>
-      <div style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 24, color, fontVariantNumeric: "tabular-nums" }}>{value}</div>
-      <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 11, color: S.muted, letterSpacing: 2, marginTop: 2 }}>{label}</div>
+      <div style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 26, color, fontVariantNumeric: "tabular-nums" }}>{value}</div>
+      <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 12, color: S.muted, letterSpacing: 2, marginTop: 2 }}>{label}</div>
     </div>
   );
 }
@@ -828,20 +834,20 @@ function FocusMode({ tracker: t, events, pulse, onTap, onUndo, onExit }) {
       <button
         onClick={(e) => { e.stopPropagation(); onExit(); }}
         aria-label="Exit focus mode"
-        style={{ position: "absolute", top: "calc(16px + env(safe-area-inset-top))", right: 20, background: S.surface, border: `1px solid ${S.line}`, borderRadius: 10, color: S.muted, fontSize: 16, width: 40, height: 40, zIndex: 41 }}
+        style={{ position: "absolute", top: "calc(16px + env(safe-area-inset-top))", right: 20, background: S.surface, border: `1px solid ${S.line}`, borderRadius: 10, color: S.muted, fontSize: 17, width: 40, height: 40, zIndex: 41 }}
       >
         ✕
       </button>
-      <div style={{ fontSize: 30, marginBottom: 4 }}>{t.emoji}</div>
-      <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 18, color: S.muted, letterSpacing: 2, marginBottom: 18 }}>{t.name.toUpperCase()}</div>
+      <div style={{ fontSize: 32, marginBottom: 4 }}>{t.emoji}</div>
+      <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 20, color: S.muted, letterSpacing: 2, marginBottom: 18 }}>{t.name.toUpperCase()}</div>
       <div style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 120, lineHeight: 1, color: t.color, fontVariantNumeric: "tabular-nums", animation: pulse === t.id ? "tick .3s ease" : "none" }}>
         {fmtNum(count)}
       </div>
-      {t.unit && <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 18, color: `${t.color}AA`, marginTop: 6 }}>{t.unit}</div>}
-      <div style={{ color: S.muted, fontSize: 13, marginTop: 26, letterSpacing: 1 }}>tap anywhere to log</div>
+      {t.unit && <div style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 20, color: `${t.color}CC`, marginTop: 6 }}>{t.unit}</div>}
+      <div style={{ color: S.muted, fontSize: 14, marginTop: 26, letterSpacing: 1 }}>tap anywhere to log</div>
       <button
         onClick={(e) => { e.stopPropagation(); onUndo(t.id); }}
-        style={{ position: "absolute", bottom: "calc(30px + env(safe-area-inset-bottom))", background: S.surface, border: `1px solid ${S.line}`, borderRadius: 12, color: S.muted, fontSize: 14, padding: "10px 24px" }}
+        style={{ position: "absolute", bottom: "calc(30px + env(safe-area-inset-bottom))", background: S.surface, border: `1px solid ${S.line}`, borderRadius: 12, color: S.muted, fontSize: 15, padding: "10px 24px" }}
       >
         − undo
       </button>
@@ -863,15 +869,15 @@ function Compare({ trackers, events, onBack }) {
 
   const sel = {
     flex: 1, minWidth: 0, padding: "11px 12px", borderRadius: 12, border: `1px solid ${S.line}`,
-    background: S.surface, color: S.text, fontSize: 14,
+    background: S.surface, color: S.text, fontSize: 15,
   };
 
   return (
     <div style={{ animation: "fadeUp .25s ease" }}>
-      <button onClick={onBack} style={{ background: "none", border: "none", color: S.muted, fontSize: 14, padding: "4px 0", marginBottom: 12 }}>
+      <button onClick={onBack} style={{ background: "none", border: "none", color: S.muted, fontSize: 15, padding: "4px 0", marginBottom: 12 }}>
         ‹ Back
       </button>
-      <h2 style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 24, fontWeight: 700, letterSpacing: 1, marginTop: 0, marginBottom: 16 }}>COMPARE</h2>
+      <h2 style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 26, fontWeight: 700, letterSpacing: 1, marginTop: 0, marginBottom: 16 }}>COMPARE</h2>
 
       <div style={{ display: "flex", gap: 10, marginBottom: 16 }}>
         <select value={aId} onChange={(e) => setAId(e.target.value)} style={sel}>
@@ -884,11 +890,11 @@ function Compare({ trackers, events, onBack }) {
 
       {a && b && (
         <div style={{ background: S.surface, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16 }}>
-          <div style={{ display: "flex", gap: 14, marginBottom: 14, fontSize: 12 }}>
+          <div style={{ display: "flex", gap: 14, marginBottom: 14, fontSize: 13 }}>
             <span style={{ color: a.color }}>■ {a.name}</span>
             <span style={{ color: b.color }}>■ {b.name}</span>
           </div>
-          <div style={{ fontFamily: "'Rajdhani', sans-serif", color: S.muted, fontSize: 12, letterSpacing: 2, marginBottom: 10 }}>LAST 14 DAYS · each scaled to its own max</div>
+          <div style={{ fontFamily: "'Rajdhani', sans-serif", color: S.muted, fontSize: 13, letterSpacing: 2, marginBottom: 10 }}>LAST 14 DAYS · each scaled to its own max</div>
           <div style={{ display: "flex", alignItems: "flex-end", gap: 4, height: 120 }}>
             {days.map((d) => {
               const ca = aCounts[d] || 0;
@@ -901,7 +907,7 @@ function Compare({ trackers, events, onBack }) {
               );
             })}
           </div>
-          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 10, color: S.muted }}>
+          <div style={{ display: "flex", justifyContent: "space-between", marginTop: 6, fontSize: 11, color: S.muted }}>
             <span>{new Date(days[0] + "T12:00").toLocaleDateString(undefined, { month: "short", day: "numeric" })}</span>
             <span>today</span>
           </div>
@@ -927,14 +933,14 @@ function AmountModal({ t, onSubmit, onClose }) {
             onChange={(e) => setVal(e.target.value.replace(/[^0-9.]/g, ""))}
             inputMode="decimal"
             placeholder="0"
-            style={{ flex: 1, minWidth: 0, padding: "13px 14px", borderRadius: 12, border: `1px solid ${S.line}`, background: S.surface2, color: S.text, fontSize: 22, fontFamily: "'Rajdhani', sans-serif", fontWeight: 700 }}
+            style={{ flex: 1, minWidth: 0, padding: "13px 14px", borderRadius: 12, border: `1px solid ${S.line}`, background: S.surface2, color: S.text, fontSize: 24, fontFamily: "'Rajdhani', sans-serif", fontWeight: 700 }}
           />
-          <span style={{ color: S.muted, fontFamily: "'Rajdhani', sans-serif", fontSize: 16, fontWeight: 600 }}>{t.unit}</span>
+          <span style={{ color: S.muted, fontFamily: "'Rajdhani', sans-serif", fontSize: 17, fontWeight: 600 }}>{t.unit}</span>
         </div>
         <button
           disabled={!ok}
           onClick={() => ok && onSubmit(num)}
-          style={{ width: "100%", padding: 13, borderRadius: 12, border: "none", background: ok ? t.color : S.surface2, color: ok ? "#14171C" : S.muted, fontFamily: "'Rajdhani', sans-serif", fontSize: 16, fontWeight: 700, letterSpacing: 1 }}
+          style={{ width: "100%", padding: 13, borderRadius: 12, border: "none", background: ok ? t.color : S.surface2, color: ok ? "#14171C" : S.muted, fontFamily: "'Rajdhani', sans-serif", fontSize: 17, fontWeight: 700, letterSpacing: 1 }}
         >
           LOG IT
         </button>
@@ -965,27 +971,27 @@ function TrackerForm({ tracker, onSave, onCancel }) {
     });
   };
 
-  const label = { fontFamily: "'Rajdhani', sans-serif", fontSize: 13, color: S.muted, letterSpacing: 2, display: "block", marginBottom: 8 };
+  const label = { fontFamily: "'Rajdhani', sans-serif", fontSize: 14, color: S.muted, letterSpacing: 2, display: "block", marginBottom: 8 };
   const modeBtn = (m, title, desc) => (
     <button
       onClick={() => setMode(m)}
       style={{
         flex: 1, padding: "12px 10px", borderRadius: 12, textAlign: "left",
         border: `1px solid ${mode === m ? S.amber : S.line}`,
-        background: mode === m ? `${S.amber}14` : S.surface, color: S.text,
+        background: mode === m ? `${S.amber}20` : S.surface, color: S.text,
       }}
     >
-      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 3 }}>{title}</div>
-      <div style={{ color: S.muted, fontSize: 11, lineHeight: 1.4 }}>{desc}</div>
+      <div style={{ fontWeight: 600, fontSize: 15, marginBottom: 3 }}>{title}</div>
+      <div style={{ color: S.muted, fontSize: 12, lineHeight: 1.4 }}>{desc}</div>
     </button>
   );
 
   return (
     <div style={{ animation: "fadeUp .25s ease" }}>
-      <button onClick={onCancel} style={{ background: "none", border: "none", color: S.muted, fontSize: 14, padding: "4px 0", marginBottom: 12 }}>
+      <button onClick={onCancel} style={{ background: "none", border: "none", color: S.muted, fontSize: 15, padding: "4px 0", marginBottom: 12 }}>
         ‹ Cancel
       </button>
-      <h2 style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 24, fontWeight: 700, letterSpacing: 1, marginTop: 0, marginBottom: 20 }}>
+      <h2 style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 26, fontWeight: 700, letterSpacing: 1, marginTop: 0, marginBottom: 20 }}>
         {tracker ? "EDIT TRACKER" : "NEW TRACKER"}
       </h2>
 
@@ -1002,7 +1008,7 @@ function TrackerForm({ tracker, onSave, onCancel }) {
         placeholder={mode === "avoid" ? "e.g. Cigarettes, Energy drinks, Impulse buys" : "e.g. Coffees, Workouts, Sales calls"}
         style={{
           width: "100%", padding: "13px 14px", borderRadius: 12, border: `1px solid ${S.line}`,
-          background: S.surface, color: S.text, fontSize: 15, marginBottom: 20,
+          background: S.surface, color: S.text, fontSize: 16, marginBottom: 20,
         }}
       />
 
@@ -1016,10 +1022,10 @@ function TrackerForm({ tracker, onSave, onCancel }) {
             maxLength={8}
             style={{
               width: "100%", padding: "13px 14px", borderRadius: 12, border: `1px solid ${S.line}`,
-              background: S.surface, color: S.text, fontSize: 15, marginBottom: 8,
+              background: S.surface, color: S.text, fontSize: 16, marginBottom: 8,
             }}
           />
-          <div style={{ color: S.muted, fontSize: 12, marginBottom: 20 }}>
+          <div style={{ color: S.muted, fontSize: 13, marginBottom: 20 }}>
             With a unit set, tapping + asks for an amount (e.g. 650 cal) instead of adding 1.
           </div>
         </>
@@ -1033,9 +1039,9 @@ function TrackerForm({ tracker, onSave, onCancel }) {
             onClick={() => setEmoji(e)}
             aria-label={`Icon ${e}`}
             style={{
-              width: 42, height: 42, borderRadius: 10, fontSize: 20,
+              width: 42, height: 42, borderRadius: 10, fontSize: 22,
               border: `1px solid ${emoji === e ? S.amber : S.line}`,
-              background: emoji === e ? `${S.amber}1A` : S.surface,
+              background: emoji === e ? `${S.amber}26` : S.surface,
             }}
           >
             {e}
@@ -1068,7 +1074,7 @@ function TrackerForm({ tracker, onSave, onCancel }) {
             inputMode="numeric"
             style={{
               width: "100%", padding: "13px 14px", borderRadius: 12, border: `1px solid ${S.line}`,
-              background: S.surface, color: S.text, fontSize: 15, marginBottom: 28,
+              background: S.surface, color: S.text, fontSize: 16, marginBottom: 28,
             }}
           />
         </>
@@ -1080,7 +1086,7 @@ function TrackerForm({ tracker, onSave, onCancel }) {
         style={{
           width: "100%", padding: 15, borderRadius: 14, border: "none", marginTop: mode === "avoid" ? 8 : 0,
           background: name.trim() ? S.amber : S.surface2, color: name.trim() ? "#14171C" : S.muted,
-          fontFamily: "'Rajdhani', sans-serif", fontSize: 17, fontWeight: 700, letterSpacing: 2,
+          fontFamily: "'Rajdhani', sans-serif", fontSize: 18, fontWeight: 700, letterSpacing: 2,
         }}
       >
         {tracker ? "SAVE CHANGES" : "CREATE TRACKER"}
