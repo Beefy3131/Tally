@@ -4,6 +4,8 @@ import { dbGet, dbSet, requestPersistence } from "./db";
 /* ============ CONSTANTS ============ */
 const COLORS = ["#FFB454", "#6FD08C", "#5EB3F6", "#F67E7E", "#C58BF2", "#F6D65E"];
 const EMOJIS = ["🔥","💧","🏋️","📖","☕","🚗","🎮","💰","🏃","😴","🍺","📵","🧠","🔧","📦","✅","💩","🍗","🍕","🍔"];
+const MILESTONES_LOGS = [10, 25, 50, 100, 250, 500, 1000, 2500, 5000];
+const MILESTONES_STREAK = [3, 7, 14, 30, 60, 100, 365];
 
 const S = {
   bg: "#14171C",
@@ -22,6 +24,7 @@ const dayKey = (ts) => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 const todayKey = () => dayKey(Date.now());
+const fmtNum = (n) => Math.round(n * 100) / 100;
 
 function countsByDay(events, trackerId) {
   const map = {};
@@ -70,9 +73,9 @@ function peakWindow(hours) {
 }
 
 function calcStreak(dayCounts) {
-  let streak = 0;
+  // Streak freeze: one missed day is forgiven per rolling 7 streak-days
+  let streak = 0, freezes = 0, sinceFreeze = 99;
   const d = new Date();
-  // streak can start today or yesterday
   if (!dayCounts[dayKey(d.getTime())] || dayCounts[dayKey(d.getTime())] <= 0) {
     d.setDate(d.getDate() - 1);
   }
@@ -80,10 +83,16 @@ function calcStreak(dayCounts) {
     const k = dayKey(d.getTime());
     if (dayCounts[k] > 0) {
       streak++;
+      sinceFreeze++;
+      d.setDate(d.getDate() - 1);
+    } else if (streak > 0 && sinceFreeze >= 7) {
+      freezes++;
+      sinceFreeze = 0;
+      streak++;
       d.setDate(d.getDate() - 1);
     } else break;
   }
-  return streak;
+  return { days: streak, freezes };
 }
 
 /* ============ APP ============ */
@@ -93,7 +102,16 @@ export default function App() {
   const [ready, setReady] = useState(false);
   const [view, setView] = useState({ page: "home" }); // home | detail | form
   const [pulse, setPulse] = useState(null); // trackerId that just ticked
+  const [toast, setToast] = useState(null);
+  const [amountFor, setAmountFor] = useState(null); // tracker awaiting a value entry
   const saveTimer = useRef(null);
+  const toastTimer = useRef(null);
+
+  const fireToast = (msg) => {
+    setToast(msg);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 3200);
+  };
 
   /* load */
   useEffect(() => {
@@ -127,19 +145,36 @@ export default function App() {
   }, [trackers, events, ready]);
 
   /* actions */
-  const increment = (id) => {
-    setEvents((ev) => [...ev, { id: uid(), trackerId: id, ts: Date.now(), delta: 1 }]);
+  const logEvent = (id, value) => {
+    const next = [...events, { id: uid(), trackerId: id, ts: Date.now(), delta: value }];
+    setEvents(next);
     setPulse(id);
     setTimeout(() => setPulse(null), 300);
     if (navigator.vibrate) navigator.vibrate(10);
+
+    /* milestone detection */
+    const t = trackers.find((x) => x.id === id);
+    if (!t) return;
+    const logsBefore = events.filter((e) => e.trackerId === id && e.delta > 0).length;
+    const logHit = MILESTONES_LOGS.find((m) => logsBefore < m && logsBefore + 1 >= m);
+    if (logHit) {
+      fireToast(`🏆 ${logHit} logs on ${t.emoji} ${t.name}!`);
+      return;
+    }
+    const prevStreak = calcStreak(countsByDay(events, id)).days;
+    const newStreak = calcStreak(countsByDay(next, id)).days;
+    const streakHit = MILESTONES_STREAK.find((m) => prevStreak < m && newStreak >= m);
+    if (streakHit) fireToast(`🔥 ${streakHit}-day streak on ${t.emoji} ${t.name}!`);
   };
+
+  const increment = (id) => logEvent(id, 1);
 
   const undo = (id) => {
     setEvents((ev) => {
       const tk = todayKey();
-      // remove most recent +1 from today for this tracker
+      // remove most recent positive log from today for this tracker
       for (let i = ev.length - 1; i >= 0; i--) {
-        if (ev[i].trackerId === id && ev[i].delta === 1 && dayKey(ev[i].ts) === tk) {
+        if (ev[i].trackerId === id && ev[i].delta > 0 && dayKey(ev[i].ts) === tk) {
           return [...ev.slice(0, i), ...ev.slice(i + 1)];
         }
       }
@@ -182,6 +217,7 @@ export default function App() {
           onUndo={undo}
           onDetail={(t) => setView({ page: "detail", tracker: t })}
           onAdd={() => setView({ page: "form" })}
+          onAmount={(t) => setAmountFor(t)}
           onImport={(data) => { setTrackers(data.trackers || []); setEvents(data.events || []); }}
         />
       )}
@@ -201,7 +237,51 @@ export default function App() {
           onCancel={() => setView(view.tracker ? { page: "detail", tracker: view.tracker } : { page: "home" })}
         />
       )}
+      {amountFor && (
+        <AmountModal
+          t={amountFor}
+          onSubmit={(v) => { logEvent(amountFor.id, v); setAmountFor(null); }}
+          onClose={() => setAmountFor(null)}
+        />
+      )}
+      {toast && (
+        <div style={{ position: "fixed", top: "calc(14px + env(safe-area-inset-top))", left: "50%", transform: "translateX(-50%)", background: S.surface2, border: `1px solid ${S.amber}77`, color: S.text, padding: "10px 18px", borderRadius: 12, fontSize: 14, zIndex: 60, boxShadow: "0 4px 20px #0008", animation: "fadeUp .25s ease", whiteSpace: "nowrap" }}>
+          {toast}
+        </div>
+      )}
     </Shell>
+  );
+}
+
+/* ============ AMOUNT MODAL ============ */
+function AmountModal({ t, onSubmit, onClose }) {
+  const [val, setVal] = useState("");
+  const num = parseFloat(val);
+  const ok = !isNaN(num) && num > 0;
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "#000000AA", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ background: S.surface, border: `1px solid ${S.line}`, borderRadius: 16, padding: 20, width: "85%", maxWidth: 340 }}>
+        <div style={{ fontWeight: 600, marginBottom: 12 }}>{t.emoji} {t.name}</div>
+        <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 16 }}>
+          <input
+            autoFocus
+            value={val}
+            onChange={(e) => setVal(e.target.value.replace(/[^0-9.]/g, ""))}
+            inputMode="decimal"
+            placeholder="0"
+            style={{ flex: 1, minWidth: 0, padding: "13px 14px", borderRadius: 12, border: `1px solid ${S.line}`, background: S.surface2, color: S.text, fontSize: 22, fontFamily: "'Rajdhani', sans-serif", fontWeight: 700 }}
+          />
+          <span style={{ color: S.muted, fontFamily: "'Rajdhani', sans-serif", fontSize: 16, fontWeight: 600 }}>{t.unit}</span>
+        </div>
+        <button
+          disabled={!ok}
+          onClick={() => ok && onSubmit(num)}
+          style={{ width: "100%", padding: 13, borderRadius: 12, border: "none", background: ok ? t.color : S.surface2, color: ok ? "#14171C" : S.muted, fontFamily: "'Rajdhani', sans-serif", fontSize: 16, fontWeight: 700, letterSpacing: 1 }}
+        >
+          LOG IT
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -225,7 +305,7 @@ function Shell({ children }) {
 }
 
 /* ============ HOME ============ */
-function Home({ trackers, events, pulse, onInc, onUndo, onDetail, onAdd, onImport }) {
+function Home({ trackers, events, pulse, onInc, onUndo, onDetail, onAdd, onAmount, onImport }) {
   const fileRef = useRef(null);
 
   const exportData = () => {
@@ -256,7 +336,7 @@ function Home({ trackers, events, pulse, onInc, onUndo, onDetail, onAdd, onImpor
   };
 
   const tk = todayKey();
-  const todayTotal = events.filter((e) => dayKey(e.ts) === tk).reduce((s, e) => s + e.delta, 0);
+  const todayTotal = events.filter((e) => dayKey(e.ts) === tk && e.delta > 0).length;
 
   return (
     <div style={{ animation: "fadeUp .25s ease" }}>
@@ -284,15 +364,16 @@ function Home({ trackers, events, pulse, onInc, onUndo, onDetail, onAdd, onImpor
 
       {trackers.map((t) => {
         const todayCount = events.filter((e) => e.trackerId === t.id && dayKey(e.ts) === tk).reduce((s, e) => s + e.delta, 0);
-        const streak = calcStreak(countsByDay(events, t.id));
+        const { days: streak, freezes } = calcStreak(countsByDay(events, t.id));
         return (
           <TrackerCard
             key={t.id}
             t={t}
             count={todayCount}
             streak={streak}
+            freezes={freezes}
             pulsing={pulse === t.id}
-            onInc={() => onInc(t.id)}
+            onInc={() => (t.unit ? onAmount(t) : onInc(t.id))}
             onUndo={() => onUndo(t.id)}
             onDetail={() => onDetail(t)}
           />
@@ -323,7 +404,7 @@ function Home({ trackers, events, pulse, onInc, onUndo, onDetail, onAdd, onImpor
   );
 }
 
-function TrackerCard({ t, count, streak, pulsing, onInc, onUndo, onDetail }) {
+function TrackerCard({ t, count, streak, freezes, pulsing, onInc, onUndo, onDetail }) {
   const goalHit = t.goal && count >= t.goal;
   return (
     <div style={{ background: S.surface, border: `1px solid ${goalHit ? t.color : S.line}`, borderRadius: 14, padding: 14, marginBottom: 12, display: "flex", alignItems: "center", gap: 12 }}>
@@ -337,7 +418,7 @@ function TrackerCard({ t, count, streak, pulsing, onInc, onUndo, onDetail }) {
           <span style={{ fontWeight: 600, fontSize: 15, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t.name}</span>
         </div>
         <div style={{ color: S.muted, fontSize: 12, marginTop: 4, display: "flex", gap: 10 }}>
-          {streak > 0 && <span style={{ color: t.color }}>🔥 {streak}d streak</span>}
+          {streak > 0 && <span style={{ color: t.color }}>🔥 {streak}d streak{freezes > 0 ? " ❄️" : ""}</span>}
           {t.goal ? <span>{goalHit ? "✓ goal hit" : `goal ${t.goal}`}</span> : null}
           <span style={{ textDecoration: "underline", textUnderlineOffset: 2 }}>history ›</span>
         </div>
@@ -364,9 +445,12 @@ function TrackerCard({ t, count, streak, pulsing, onInc, onUndo, onDetail }) {
           animation: pulsing ? "tick .3s ease" : "none",
         }}
       >
-        <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: 30, color: t.color, fontVariantNumeric: "tabular-nums", letterSpacing: 1 }}>
-          {count}
+        <span style={{ fontFamily: "'Rajdhani', sans-serif", fontWeight: 700, fontSize: String(fmtNum(count)).length > 3 ? 20 : 30, color: t.color, fontVariantNumeric: "tabular-nums", letterSpacing: 1 }}>
+          {fmtNum(count)}
         </span>
+        {t.unit && (
+          <span style={{ color: `${t.color}AA`, fontSize: 11, fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, alignSelf: "flex-end", paddingBottom: 12 }}>{t.unit}</span>
+        )}
         <span style={{ color: t.color, fontSize: 18, fontWeight: 600 }}>+</span>
       </button>
     </div>
@@ -378,7 +462,12 @@ function Detail({ tracker: t, events, onBack, onEdit, onDelete }) {
   const [confirmDel, setConfirmDel] = useState(false);
   const dayCounts = countsByDay(events, t.id);
   const total = events.filter((e) => e.trackerId === t.id).reduce((s, e) => s + e.delta, 0);
-  const streak = calcStreak(dayCounts);
+  const { days: streak, freezes } = calcStreak(dayCounts);
+  const logCount = events.filter((e) => e.trackerId === t.id && e.delta > 0).length;
+  const badgesStreak = MILESTONES_STREAK.filter((m) => streak >= m);
+  const badgesLogs = MILESTONES_LOGS.filter((m) => logCount >= m);
+  const nextLog = MILESTONES_LOGS.find((m) => logCount < m);
+  const nextStreak = MILESTONES_STREAK.find((m) => streak < m);
   const days7 = lastNDays(7);
   const days30 = lastNDays(30);
   const max7 = Math.max(1, ...days7.map((d) => dayCounts[d] || 0));
@@ -403,9 +492,24 @@ function Detail({ tracker: t, events, onBack, onEdit, onDelete }) {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 20 }}>
-        <Stat label="ALL-TIME" value={total} color={t.color} />
-        <Stat label="STREAK" value={`${streak}d`} color={t.color} />
+        <Stat label={t.unit ? `ALL-TIME ${t.unit.toUpperCase()}` : "ALL-TIME"} value={fmtNum(total)} color={t.color} />
+        <Stat label="STREAK" value={`${streak}d${freezes > 0 ? " ❄️" : ""}`} color={t.color} />
         <Stat label="ACTIVE / 30D" value={active30} color={t.color} />
+      </div>
+
+      <div style={{ background: S.surface, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
+        <div style={{ fontFamily: "'Rajdhani', sans-serif", color: S.muted, fontSize: 13, letterSpacing: 2, marginBottom: 12 }}>MILESTONES</div>
+        {badgesStreak.length + badgesLogs.length > 0 ? (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+            {badgesStreak.map((m) => <Chip key={"s" + m} color={t.color} label={`🔥 ${m}-DAY STREAK`} />)}
+            {badgesLogs.map((m) => <Chip key={"l" + m} color={t.color} label={`🏆 ${m} LOGS`} />)}
+          </div>
+        ) : (
+          <div style={{ color: S.muted, fontSize: 13, marginBottom: 10 }}>No badges yet — keep logging.</div>
+        )}
+        <div style={{ color: S.muted, fontSize: 11 }}>
+          Next up: {nextLog ? `${nextLog} logs` : "—"}{nextStreak ? ` · ${nextStreak}-day streak` : ""}
+        </div>
       </div>
 
       <div style={{ background: S.surface, border: `1px solid ${S.line}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
@@ -470,7 +574,7 @@ function Detail({ tracker: t, events, onBack, onEdit, onDelete }) {
         {recent.map((e) => (
           <div key={e.id} style={{ display: "flex", justifyContent: "space-between", padding: "7px 0", borderBottom: `1px solid ${S.line}`, fontSize: 13 }}>
             <span style={{ color: e.delta > 0 ? t.color : S.muted, fontFamily: "'Rajdhani', sans-serif", fontWeight: 600 }}>
-              {e.delta > 0 ? "+1" : "−1"}
+              {e.delta > 0 ? `+${fmtNum(e.delta)}${t.unit ? " " + t.unit : ""}` : "−1"}
             </span>
             <span style={{ color: S.muted }}>
               {new Date(e.ts).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
@@ -498,6 +602,14 @@ function Detail({ tracker: t, events, onBack, onEdit, onDelete }) {
   );
 }
 
+function Chip({ label, color }) {
+  return (
+    <span style={{ border: `1px solid ${color}55`, background: `${color}14`, color: S.text, borderRadius: 999, padding: "5px 12px", fontSize: 11, fontFamily: "'Rajdhani', sans-serif", fontWeight: 600, letterSpacing: 1 }}>
+      {label}
+    </span>
+  );
+}
+
 function Stat({ label, value, color }) {
   return (
     <div style={{ background: S.surface, border: `1px solid ${S.line}`, borderRadius: 14, padding: "12px 8px", textAlign: "center" }}>
@@ -513,10 +625,11 @@ function TrackerForm({ tracker, onSave, onCancel }) {
   const [emoji, setEmoji] = useState(tracker?.emoji || "🔥");
   const [color, setColor] = useState(tracker?.color || COLORS[0]);
   const [goal, setGoal] = useState(tracker?.goal || "");
+  const [unit, setUnit] = useState(tracker?.unit || "");
 
   const submit = () => {
     if (!name.trim()) return;
-    onSave({ ...(tracker || {}), name: name.trim(), emoji, color, goal: goal ? Number(goal) : null });
+    onSave({ ...(tracker || {}), name: name.trim(), emoji, color, goal: goal ? Number(goal) : null, unit: unit.trim() || null });
   };
 
   const label = { fontFamily: "'Rajdhani', sans-serif", fontSize: 13, color: S.muted, letterSpacing: 2, display: "block", marginBottom: 8 };
@@ -540,6 +653,21 @@ function TrackerForm({ tracker, onSave, onCancel }) {
           background: S.surface, color: S.text, fontSize: 15, marginBottom: 20,
         }}
       />
+
+      <label style={label}>UNIT (OPTIONAL)</label>
+      <input
+        value={unit}
+        onChange={(e) => setUnit(e.target.value)}
+        placeholder="oz, cal, $, miles — blank = simple counting"
+        maxLength={8}
+        style={{
+          width: "100%", padding: "13px 14px", borderRadius: 12, border: `1px solid ${S.line}`,
+          background: S.surface, color: S.text, fontSize: 15, marginBottom: 8,
+        }}
+      />
+      <div style={{ color: S.muted, fontSize: 12, marginBottom: 20 }}>
+        With a unit set, tapping + asks for an amount (e.g. 650 cal) instead of adding 1.
+      </div>
 
       <label style={label}>ICON</label>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 20 }}>
